@@ -1,0 +1,16 @@
+{
+  "domain": "SmartHomeAgent",
+  "name": "SmartHomeAgent",
+  "version": "2025.2.12",
+  "codeowners": [""],
+  "documentation": "",
+  "config_flow": true,
+  "dependencies": ["conversation"],
+  "after_dependencies": ["assist_pipeline"],
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "requirements": [
+    "loguru==0.7.2",
+    "openai==1.42.0"
+  ]
+}
