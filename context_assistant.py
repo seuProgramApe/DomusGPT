@@ -280,6 +280,7 @@ def get_sensor_data_by_mac(mac_address: str):
 
 
 def get_all_sensor_data():
+    """获取所有已经接入的MIoT设备的传感器数据."""
     miot_devices = CONFIG.hass_data["miot_devices"]
     all_sensor_data = []
     for device in miot_devices:

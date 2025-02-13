@@ -6,7 +6,7 @@ from .context_assistant import get_all_context
 from .environment import Environment
 from .message import Message
 from .utils.singleton import Singleton
-from .roles import Router
+from . import Router
 
 
 class Subtask:
@@ -116,9 +116,9 @@ class Jarvis(metaclass=Singleton):
             self.last_message_from = None
             self.environment.reset()
 
-            self.rspls.append(msg.content)
+            self.rspls.append(msg.content)  # 将本次任务的返回信息加入rspls
 
-            now = datetime.now() + timedelta(hours=8)
+            now = datetime.now() + timedelta(hours=8)  # 正式发布时可能需要修改时区
             formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")  # 该任务完成的格式化时间
 
             curr_subtask: Subtask = deepcopy(self.curr_subtask)

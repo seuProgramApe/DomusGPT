@@ -126,7 +126,7 @@ class time_tool_agent(tool_agent):
 
     async def run(self, request):
         """运行time_tool_agent并返回时间信息."""
-        now = datetime.now() + timedelta(hours=8)
+        now = datetime.now() + timedelta(hours=8)  # 正式发布时可能需要修改时区
         formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")
         return "当前时间是：" + formatted_time
 
@@ -162,7 +162,10 @@ class map_tool_agent(tool_agent):
                     try:
                         paths = rsp_json["route"]["paths"]
                         time = paths[0]["cost"]["duration"]
-                        return f"根据当前的交通状况，从{start}到{dest}驾车所需时间为：{int(time) / 60}分钟。"
+                        optimal_route = []
+                        for instruction in paths[0]["steps"]:
+                            optimal_route.append(instruction["instruction"])
+                        return f"根据当前的交通状况，从{start}到{dest}驾车所需时间为：{int(time) / 60}分钟。\n最优路径是{optimal_route!s}"
                     except (KeyError, IndexError):
                         return "Error: Invalid response format from API."
                 return f"Error: Unable to fetch data, status code {response.status}"

@@ -1,13 +1,15 @@
+import asyncio
+
 from pydantic import BaseModel, Field
-from .roles.role import Role
+
+from .configs import CONFIG
 from .memory import Memory
 from .message import Message
-from .roles.device_controler import DeviceControler
-from .roles.tap_generator import TapGenerator
 from .roles.chatbot import Chatbot
-import asyncio
+from .roles.device_controler import DeviceControler
+from .roles.role import Role
+from .roles.tap_generator import TapGenerator
 from .utils.logs import _logger
-from .configs import CONFIG
 
 
 class Environment(BaseModel):

@@ -79,7 +79,6 @@ class ControlDevice(Action):
 
     def parse_output(self, output: str) -> dict:
         """将LLM的输出转换为JSON字符串."""
-        # TODO error handling
         if output.startswith("```json"):
             output = output[7:]
             output = output[:-3]
@@ -165,13 +164,15 @@ class ControlDevice(Action):
                             attachment=None,
                         ),
                     )
+            # 若没有找到对应的工具：返回工具不可用的信息
             return Message(
                 role="Tool",
                 content=f"Observation: no available tool named {target_tool}",
-                sent_from="SYSTEM",
+                sent_from=None,
                 send_to=["DeviceControler"],
-                cause_by="UserResponse",
+                cause_by=None,
             )
+
         return None
 
     def reset(self):
