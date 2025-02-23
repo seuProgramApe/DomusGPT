@@ -113,12 +113,19 @@ class GenerateTAP(Action):
         _logger.info(f"TapGenerator rsp: {rsp}")
         # TODO error handling
         rsp_json = self.parse_output(rsp)
+
         if rsp_json["Action_type"] == "Finish":
             self.llm.reset()
             tap = rsp_json["TAP"]
             say_to_user = rsp_json["Say_to_user"]
             TRANSLATOR = Translator()
-            await TRANSLATOR.deploy_tap(self.user_request, tap)
+
+            # 判断即将生成的TAP是否只运行一次
+            runOnce: bool = False
+            if user_input.attachment.content == "TAP only run once":
+                runOnce = True
+
+            await TRANSLATOR.deploy_tap(runOnce, self.user_request, tap)
             self.user_request = None
             return Message(
                 role=self.name,
@@ -127,6 +134,7 @@ class GenerateTAP(Action):
                 cause_by="Finish",
                 sent_from="TAPGenerator",
             )
+
         if rsp_json["Action_type"] == "AskUser":
             say_to_user = rsp_json["Say_to_user"]
             self.llm.add_assistant_msg(say_to_user)
@@ -137,14 +145,14 @@ class GenerateTAP(Action):
                 cause_by="AskUser",
                 sent_from="TAPGenerator",
             )
-        self.user_request = None
-        self.llm.reset()
+
+        # 处理错误的Action_type，让LLM重新生成正确的response
         return Message(
-            role=self.name,
-            content="Sorry, something wrong.",
-            send_to=["User"],
-            cause_by="Finish",
-            sent_from="TAPGenerator",
+            role="SYSTEM",
+            content="Incorrect action type, please generate correct response.",
+            send_to=["TAPGenerator"],
+            cause_by=None,
+            sent_from=None,
         )
 
     def reset(self):

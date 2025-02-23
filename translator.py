@@ -155,7 +155,7 @@ class Translator(metaclass=Singleton):
                 f.writelines(lines)
                 # print("已经写入automations.yaml文件")
 
-    async def deploy_tap(self, user_input, TAP_json):
+    async def deploy_tap(self, runOnce: bool, user_input, TAP_json):
         _logger.debug("deploy_tap")
         miot_devices = CONFIG.hass_data["miot_devices"]
         triggers = TAP_json.get("trigger", "")
@@ -305,6 +305,7 @@ class Translator(metaclass=Singleton):
       attribute: {trigger_field_str}
       above: {trigger_value - 1}
       below: {trigger_value + 1}"""
+
             # trigger与时间相关
             else:
                 if trigger_service_str == "Date":
@@ -313,14 +314,16 @@ class Translator(metaclass=Singleton):
                     trigger_entity_id = "sensor.time"
                 else:
                     trigger_entity_id = "sensor.time_date"
-                trigger_yaml = f"""trigger: state
+                trigger_yaml = f"""platform: state
       entity_id: {trigger_entity_id}
       to: '{trigger_value_str}'"""
+
         elif op == ">":
             trigger_yaml = f"""platform: numeric_state
       entity_id: {trigger_entity_id}
       attribute: {trigger_field_str}
       above: {trigger_value}"""
+
         elif op == "<":
             trigger_yaml = f"""- platform: numeric_state
       entity_id: {trigger_entity_id}
@@ -328,17 +331,30 @@ class Translator(metaclass=Singleton):
       below: {trigger_value}"""
 
         timestamp = int(time.time() * 1000)
+        # 只运行一次的自动化啊alias必须和id一致，便于后续关闭
+        alias = user_input
+        if runOnce:
+            alias = timestamp
+
         new_automation = f"""
 - id: '{timestamp}'
-  alias: {user_input}
+  alias: {alias}
   trigger:
       {trigger_yaml}
   action:
-      service: xiaomi_miot.set_property
+    - service: xiaomi_miot.set_property
       data:
         entity_id: {action_entity_id}
         field: {action_field_str}
-        value: {action_value}
-    """
+        value: {action_value}"""
+
+        run_once = f"""
+    - service: automation.turn_off
+      target:
+        entity_id: automation.{timestamp}
+"""
+        if runOnce:
+            # 如果该自动化只希望运行一次，添加run_once部分
+            new_automation += run_once
         _logger.info("new automation yaml: {}".format(new_automation))
         await self.add_automation(new_automation)

@@ -2,11 +2,11 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from queue import Queue
 
+from . import Router
 from .context_assistant import get_all_context
 from .environment import Environment
 from .message import Message
 from .utils.singleton import Singleton
-from . import Router
 
 
 class Subtask:

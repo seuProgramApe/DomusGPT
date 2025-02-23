@@ -20,10 +20,10 @@ Device hierarchy must be respected (e.g., speaker is a sub-service of television
 Specially, if you want to modify the airconditioner target temperature, you should generate command with content: id.air_conditioner.target_temperature = <value>
 
 # Input
-User Request: The user's command or query.
-Device List: Information on devices, including ID, type, area, and available services. Each service has specific properties.
-Tool List: Available tools with their functions and required arguments.
-Sensor Data: The current data from all sensors attached to indoor devices. Each set of sensor information has an ID that matches the device ID to which the sensors belong.
+1. User Request: The user's command or query.
+2. Device List: Information on devices, including ID, type, area, and available services. Each service has specific properties.
+3. Tool List: Available tools with their functions and required arguments.
+4. Sensor Data: The current data from all sensors attached to indoor devices. Each set of sensor information has an ID that matches the device ID to which the sensors belong.
 
 # Solution
 1. Generate commands based on the user's request only when you have sufficient information to judge all the premises.
@@ -83,6 +83,7 @@ class ControlDevice(Action):
     def __init__(self, name="DeviceControler", context=None):
         super().__init__(name, context)
         self.llm = LLM()
+        # TODO Agent不能准确识别需要调用时间工具的情况，考虑将时间直接输入
         self.tool_agent = [weather_tool_agent(), time_tool_agent(), map_tool_agent()]
         self.tool_list = self.tool_agent_to_tool_list()
         self.tool_dict = self.tool_agent_to_tool_dict()
@@ -173,9 +174,9 @@ class ControlDevice(Action):
             return Message(
                 role="Tool",
                 content=f"Observation: no available tool named {target_tool}",
-                sent_from=None,
+                sent_from="SYSTEM",
                 send_to=["DeviceControler"],
-                cause_by=None,
+                cause_by="SYSTEM",
             )
 
         if rsp_json["Action_type"] == "SeekHelp":
@@ -186,9 +187,23 @@ class ControlDevice(Action):
                 sent_from="DeviceControler",
                 send_to=["TAPGenerator"],
                 cause_by="UserInput",
+                attachment=Message(
+                    role=self.name,
+                    content="TAP only run once",
+                    sent_from="DeviceControler",
+                    send_to=["TAPGenerator"],
+                    cause_by="SYSTEM",
+                ),
             )
 
-        return None
+        # 处理不正确的Action_type，让LLM重新生成回复
+        return Message(
+            role="SYSTEM",
+            content="Incorrect action type, please generate correct response.",
+            sent_from="SYSTEM",
+            send_to=["DeviceControler"],
+            cause_by="SYSTEM",
+        )
 
     def reset(self):
         self.llm.reset()
