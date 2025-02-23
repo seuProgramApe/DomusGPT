@@ -13,9 +13,10 @@ SYSTEM_MESSAGE = """
 但当且仅当用户的问题是关于室内的环境数据（例如室内的各种传感器可以获取的数据）或其他环境数据（例如天气情况、交通情况）或其他百科知识（例如询问某种事物、某位名人的信息）时。
 
 # Input
-用户需求（request）
-传感器数据（Data from sensors）
-工具列表 （tool list）：一个列表，记录了可用的工具，包括工具的名称（name）、功能（function）、必须的参数（arguments）
+用户需求（User Request）
+工具列表 （Tool list）：一个列表，记录了可用的工具，包括工具的名称（name）、功能（function）、必须的参数（arguments）
+设备列表（Device list)：家中可用的设备信息
+传感器数据（Data from sensors）：当前所有家中可用的设备上安装的传感器的数据。每组传感器信息都有一个与设备ID匹配的ID。
 
 # Solution
 针对用户提出的不同请求，你可以采取以下3种行动（Action_type）之一：
@@ -58,7 +59,8 @@ SYSTEM_MESSAGE = """
 Example1:
 User Input: 请告诉我今天的天气状况？
 tool list:[{"name": "WeatherInformation", "function": "提供用户家附近的天气信息/气象数据", arguments:[]}]
-Chatbot: {
+Chatbot:
+{
     "Action_type": "CallTools",
     "Thought": "用户需要获取今天的天气信息，我可以通过调用WeatherInformation这个工具来获得天气信息。",
     "Arguments": [],
@@ -70,12 +72,15 @@ Observation: “用户家所在区域今日的气象信息是：<省略具体的
     "Thought": "结合工具的返回信息，我已经获得了今日的天气信息，我可以回答用户提出的问题",
     "Say_to_user": "今日的天气信息是：<省略具体的气象信息>",
 }
+
+# 请注意：你的回答必须和用户输入（User request）是同一种语言，例如：中文、英文等。
 """
 
 USER_MESSAGE = """
 User request: {user_request}
-Data from sensors: {sensor_data}
 Tool list: {tool_list}
+Device list: {device_list}
+Data from sensors: {sensor_data}
 """
 
 
@@ -116,6 +121,7 @@ class Chat(Action):
         self.llm.add_user_msg(
             USER_MESSAGE.format(
                 user_request=user_request,
+                device_list=CONFIG.hass_data["all_context"],
                 sensor_data=CONFIG.hass_data["all_sensor_data"],
                 tool_list=self.tool_list,
             )

@@ -61,12 +61,13 @@ class Jarvis(metaclass=Singleton):
             # 子任务队列为空且所有子任务都已经完成
             await self.task_decomposition(request)
 
-        if self.flag:  # 李安：如果flag为true，向环境发布的信息是用户输入，说明上一次的消息是由用户发出的请求，所以这次的消息要发给Manager
+        if self.flag:  # 如果flag为True，说明上一个子任务已经完成，需要执行新的子任务
             subtask: Subtask = self.task_que.get(block=False)  # 获取新任务
             self.curr_subtask = subtask
             print(f"Execute new subtask: {subtask.content}")
-            type = subtask.type
-            if type == "TAP generation":
+
+            subtask_type = subtask.type
+            if subtask_type == "TAP generation":
                 await self.environment.publish_message(
                     Message(
                         role="Manager",
@@ -76,7 +77,7 @@ class Jarvis(metaclass=Singleton):
                         cause_by="UserInput",
                     )
                 )
-            elif type == "Device Control":
+            elif subtask_type == "Device Control":
                 await self.environment.publish_message(
                     Message(
                         role="Manager",
@@ -86,7 +87,7 @@ class Jarvis(metaclass=Singleton):
                         cause_by="UserInput",
                     )
                 )
-            elif type == "General Q&A":
+            elif subtask_type == "General Q&A":
                 await self.environment.publish_message(
                     Message(
                         role="Manager",
@@ -100,7 +101,7 @@ class Jarvis(metaclass=Singleton):
                 raise Exception("Unknown subtask type")
         elif self.last_message_from is None:
             raise Exception("last_message_from is None")
-        else:  # 李安：如果flag为false，向环境发布的信息是用户回复，说明上一次的消息是由某个角色发出的向用户询问，所以这次的消息也要发给这个角色
+        else:  # 如果flag为False，说明上一个子任务还未完成，正在等待用户回复，所以需要将用户回复发送给上一个子任务的角色
             await self.environment.publish_message(
                 Message(
                     role="Jarvis",
@@ -110,8 +111,9 @@ class Jarvis(metaclass=Singleton):
                     cause_by="UserResponse",
                 )
             )
+
         msg, flag = await self.environment.run()
-        if flag:  # 李安：如果环境运行得到的信息中的flag是True，说明resp_type是Finish，本次任务已经完成，需要重置环境
+        if flag:  # 如果环境运行得到的信息中的flag是True，说明resp_type是Finish，本次任务已经完成，需要重置环境
             self.flag = True
             self.last_message_from = None
             self.environment.reset()
@@ -133,6 +135,7 @@ class Jarvis(metaclass=Singleton):
             if self.task_que.empty():  # 所有子任务都已经处理完毕
                 print("All subtasks done.")
                 rsp = deepcopy(self.rspls)
+                # TODO 所有任务信息由LLM进行汇总
                 self.rspls.clear()
                 self.subtaskls.clear()  # 清空rspls和subtaskls
                 return rsp

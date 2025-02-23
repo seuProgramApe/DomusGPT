@@ -17,7 +17,7 @@ class Translator(metaclass=Singleton):
 
     async def run_single_command(self, command_str: str):
         """用于将DeviceControler的命令翻译并执行."""
-        print("即将执行的命令是：" + command_str)
+        print("执行命令：" + command_str)
         service_str = command_str.split("=")[0].strip()  # 等号左边的部分
         value_str = command_str.split("=")[1].strip()  # 等号右边的部分
         id_str, field_str = service_str.split(".", 1)
@@ -128,7 +128,7 @@ class Translator(metaclass=Singleton):
 
         # copy the automations.yaml for bak
         bak_file = os.path.join(config_path, "automations.yaml.bak")
-        print("已经创建bak文件")
+        # print("已经创建bak文件")
         with open(automation_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
         with open(bak_file, "w", encoding="utf-8") as f:
@@ -206,7 +206,7 @@ class Translator(metaclass=Singleton):
             if device.get("id", -1) == action_id:
                 services = device.get("services", {})
                 service = services[action_service_name]
-                print(service)
+                # print(service)
                 property = service[action_property_name]
                 p_format = property["format"]
 

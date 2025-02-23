@@ -29,7 +29,7 @@ class Environment(BaseModel):
         _logger.debug(f"devices number: {len(self.devices)}")
         self.add_roles(
             [DeviceControler(), TapGenerator(), Chatbot()]
-        )  # 将角色添加到环境中
+        )  # 将角色添加到环境中，后续开发者可以根据自己的需求添加角色
 
     def add_role(self, role: Role):
         """增加一个在当前环境的Role."""
@@ -62,11 +62,11 @@ class Environment(BaseModel):
             futures = []
             for key in self.roles:
                 role = self.roles[key]
-                future = role.run()  # 李安：future是一个协程
-                futures.append(future)  # 李安：将协程添加到futures列表中
+                future = role.run()  # future是一个协程
+                futures.append(future)  # 将协程添加到futures列表中
             await asyncio.gather(
                 *futures
-            )  # 李安：role.run()方法中await self._publish_message(rsp_message)这一行已经将rsp_message发布到环境中了，所以这里无需关注返回值
+            )  # role.run()方法中await self._publish_message(rsp_message)这一行已经将rsp_message发布到环境中了，所以这里无需关注返回值
         latest_message = self.memory.get_latest_message()
 
         _logger.info(f"latest_message: {latest_message.to_dict()}")

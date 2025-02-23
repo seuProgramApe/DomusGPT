@@ -14,7 +14,7 @@ SYSTEM_MESSAGE_2 = """
 # 输入
 1. 用户请求
 2. 设备列表：与用户请求相关的设备信息，包括id、区域、类型和服务。每个设备的服务可能包含多个属性。
-3. 依赖任务完成状态：如果用户的请求与其他设备控制任务的完成时间相关（例如，空调关闭30分钟后打开加热器），则会提供此补充信息（例如，空调在<specific time>关闭）。
+3. 依赖任务完成状态：如果用户的请求与其他设备控制任务的完成状态信息相关，则会提供此补充信息（例如：依赖任务是否完成或完成时间 ）。
 
 # 解决方案
 根据用户请求，您需要找到trigger、condition和action，然后找到相应的设备、服务及其属性。如果无法生成确切的TAP，您需要向用户询问更多信息。如果用户请求与依赖任务的完成时间相关，您需要解析出任务完成时间中的具体时间。
@@ -98,7 +98,7 @@ class GenerateTAP(Action):
             USER_MESSAGE.format(
                 user_request=user_request,
                 device_list=all_context,
-                dependency_task_completion_status=temp_str,
+                dependency_task_completion_status=None,
             )
         )
 
@@ -114,7 +114,6 @@ class GenerateTAP(Action):
             self.llm.reset()
             tap = rsp_json["TAP"]
             say_to_user = rsp_json["Say_to_user"]
-            # say_to_user = rsp_json["Say_to_user"] + "\n" + str(tap)
             TRANSLATOR = Translator()
             await TRANSLATOR.deploy_tap(self.user_request, tap)
             self.user_request = None

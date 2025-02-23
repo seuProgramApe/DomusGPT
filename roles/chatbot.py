@@ -7,7 +7,7 @@ class Chatbot(Role):
         self,
         name="",
         profile="Chatbot",
-        goal="Friendly chat with users about things not related to controiing devices or generating TAPs",
+        goal="Respond to user requests not related to device control or TAP generation",
         **kwargs,
     ):
         super().__init__(name=name, profile=profile, goal=goal, **kwargs)

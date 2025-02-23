@@ -65,7 +65,7 @@ USER_MESSAGE = """
 User request: {user_request}
 Device list: {device_list}
 Tool list: {tool_list}
-Sensors data: {sensor_data}
+Sensor data: {sensor_data}
 """
 
 

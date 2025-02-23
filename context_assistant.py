@@ -99,7 +99,7 @@ def get_miot_devices():
     for device in devices_json["data"]["devices"]:
         identifiers = device.get("identifiers", [])
         for identifier in identifiers:
-            if identifier[0] == "xiaomi_miot":
+            if identifier[0] == "xiaomi_miot":  # 只识别xiaomi_miot设备
                 area_id = device["area_id"]
                 model = device["model"]
                 # 条件判断name_by_user是否为null，不为空则使用name_by_user，否则使用name
