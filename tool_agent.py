@@ -59,10 +59,11 @@ class weather_tool_agent(tool_agent):
             f"https://api.caiyunapp.com/v2.6/{api_key}/{longitude},{latitude}/realtime"
         )
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession() as session:  # noqa: SIM117
             async with session.get(url) as response:
                 if response.status == 200:
                     data = await response.json()
+                    # TODO 加入日出和日落时间
                     if "result" in data:
                         return self._translate_keys(data["result"])
                     return {"错误": "API返回数据不包含 result 部分"}
@@ -128,7 +129,7 @@ class time_tool_agent(tool_agent):
         """运行time_tool_agent并返回时间信息."""
         now = datetime.now() + timedelta(hours=8)  # 正式发布时可能需要修改时区
         formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        return "当前时间是：" + formatted_time
+        return "current time:" + formatted_time
 
 
 class map_tool_agent(tool_agent):

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 
 from ..actions.action import Action
 from ..configs import CONFIG
@@ -29,11 +30,13 @@ Sensor Data: The current data from all sensors attached to indoor devices. Each 
 2. If insufficient information available, take one of the following actions:
     1.Ask the user for clarification.
     2.Call a tool for assistance.
+3. You can only generate commands for user requests that need to be executed immediately. If you find that device control is not to be executed immediately (e.g., the user's request involves waiting for a device's status to change before controlling another device or waiting for a period of time before controlling a device), you need to seek help from other agents. In this case, you should choose the SeekHelp Action type.
 
 # Action Types
 Finish: Execute the command and confirm with the user.
 AskUser: Request more information.
 CallTools: Use an external tool for assistance.
+SeekHelp: Request help from other agents only when the user's request cannot be executed immediately.
 
 # Output Format(In JSON type)
 AskUser :
@@ -42,16 +45,23 @@ CallTools:
 {"Action_type": "CallTools", "Thought": "Reason for calling the tool", "Arguments": "Arguments required", "Target_tool": "Exact tool name"}
 Finish:
 {"Action_type": "Finish", "Thought": "Reason for action", "Commands": ["Generated commands"], "Say_to_user": "Response in user's language"}
+SeekHelp:
+{"Action_type": "SeekHelp", "Thought": "Reason for seeking help"}
 
 # Example
-#User: 我现在开车从学校出发，如果晚上九点五十到不了家而且今天气温比较低的话，先帮我打开卧室的空调。
-#DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "The user requested the air conditioner to be turned on at 9:50 PM if they are not home and it\'s cold outside. First, I need to determine if the user will be late arriving home at that time.",\n    "Arguments": "["school", "home", "driving"]",\n    "Target_tool": "PathPlanning"\n}
-#Observation: 从用户的家到目的地驾车所需时间为：26.35分钟
-#DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "The user has previously requested that if they are not home by 9:50 PM and it is cold outside, the bedroom air conditioner should be turned on. Since the user\'s travel time from school to home is about 26.35 minutes, I need to calculate the actual time of arrival based on their departure time and compare it with 9:50 PM. I also need to check the weather conditions at the user\'s home to determine if it is indeed cold.",\n    "Arguments": "",\n    "Target_tool": "Time"\n}
-#Observation: 当前时间是：2025-01-31 21:47:41
-#DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "To determine if it is cold outside, I need to call the WeatherInformation tool to get the current temperature at the user\'s home location.",\n    "Arguments": "",\n    "Target_tool": "WeatherInformation"\n}
-#Observation: 用户家所在区域的气象信息是<省略的具体气象信息>
-#DeviceControler: All the conditions have been met, issue the command and notify the user.
+Example 1:
+User: 我现在开车从学校出发，如果晚上九点五十到不了家而且今天气温比较低的话，先帮我打开卧室的空调。
+DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "The user requested the air conditioner to be turned on at 9:50 PM if they are not home and it\'s cold outside. First, I need to determine if the user will be late arriving home at that time.",\n    "Arguments": "["school", "home", "driving"]",\n    "Target_tool": "PathPlanning"\n}
+Observation: 从用户的家到目的地驾车所需时间为：26.35分钟
+DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "The user has previously requested that if they are not home by 9:50 PM and it is cold outside, the bedroom air conditioner should be turned on. Since the user\'s travel time from school to home is about 26.35 minutes, I need to calculate the actual time of arrival based on their departure time and compare it with 9:50 PM. I also need to check the weather conditions at the user\'s home to determine if it is indeed cold.",\n    "Arguments": "",\n    "Target_tool": "Time"\n}
+Observation: 当前时间是：2025-01-31 21:47:41
+DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "To determine if it is cold outside, I need to call the WeatherInformation tool to get the current temperature at the user\'s home location.",\n    "Arguments": "",\n    "Target_tool": "WeatherInformation"\n}
+Observation: 用户家所在区域的气象信息是<省略的具体气象信息>
+DeviceControler: All the conditions have been met, issue the command and notify the user.
+
+Example 2:
+User: 十五分钟后关闭电视。
+DeviceControler: {\n    "Action_type": "SeekHelp",\n    "Thought": "The user requested the TV to be turned off in fifteen minutes. Since the command is not to be executed immediately, I need to seek help from other agents.",\n}
 
 # Important Notes
 1. Only one action per response. If multiple inputs are needed, request them incrementally.
@@ -79,14 +89,9 @@ class ControlDevice(Action):
 
     def parse_output(self, output: str) -> dict:
         """将LLM的输出转换为JSON字符串."""
-        if output.startswith("```json"):
-            output = output[7:]
-            output = output[:-3]
-            return json.loads(output.strip())
-        if output.startswith("```"):
-            output = output[3:]
-            output = output[:-3]
-            return json.loads(output.strip())
+        match = re.search(r"```json\s*(.*?)\s*```", output, re.DOTALL)
+        if match:
+            return json.loads(match.group(1).strip())
         return json.loads(output.strip())
 
     async def run(self, history_msg: list[Message], user_input: Message) -> Message:
@@ -171,6 +176,16 @@ class ControlDevice(Action):
                 sent_from=None,
                 send_to=["DeviceControler"],
                 cause_by=None,
+            )
+
+        if rsp_json["Action_type"] == "SeekHelp":
+            # 用户需求不是可以立即执行的命令，请求帮助，将信息发给TAPGenerator尝试执行
+            return Message(
+                role=self.name,
+                content=user_request,
+                sent_from="DeviceControler",
+                send_to=["TAPGenerator"],
+                cause_by="UserInput",
             )
 
         return None

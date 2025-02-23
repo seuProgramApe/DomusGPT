@@ -1,11 +1,13 @@
+import asyncio
+import json
+
 from ..actions.action import Action
 from ..configs import CONFIG
-from ..message import Message
-from ..utils.logs import _logger
 from ..llm import LLM
-import json
+from ..message import Message
 from ..translator import Translator
-import asyncio
+from ..utils.logs import _logger
+from ..tool_agent import time_tool_agent
 
 SYSTEM_MESSAGE_2 = """
 # 角色
@@ -72,6 +74,7 @@ class GenerateTAP(Action):
         super().__init__(name, context)
         self.llm = LLM()
         self.user_request = None
+        self.time = time_tool_agent()
 
     def parse_output(self, output: str) -> dict:
         # TODO error handling
@@ -93,12 +96,12 @@ class GenerateTAP(Action):
         user_request = user_input.content
         self.llm.add_system_msg(SYSTEM_MESSAGE_2)
         all_context = CONFIG.hass_data["all_context"]
-        temp_str = '{"current time": "2025-02-08 15:00", "dependency":[{"content": "关闭空调", "finish time": "2025-02-08 14:59"}]}'
+        curr_time = await self.time.run(None)
         self.llm.add_user_msg(
             USER_MESSAGE.format(
                 user_request=user_request,
                 device_list=all_context,
-                dependency_task_completion_status=None,
+                dependency_task_completion_status=curr_time,
             )
         )
 
