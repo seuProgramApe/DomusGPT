@@ -29,22 +29,15 @@ class Jarvis(metaclass=Singleton):
         self.last_message_from = None
         self.task_que: Queue[Subtask] = Queue()  # 等待完成的子任务队列
         self.rspls: list = []  # 用于汇总所有已经完成的子任务的最后返回信息的content
-        self.subtaskls: list[Subtask] = []  # 用于汇总所有**已经完成的子任务**的详细信息
+        self.subtask_done: list[Subtask] = []  # 用于存储所有已经完成的子任务的列表
+        self.subtask_todo: list[Subtask] = []  # 用于存储所有等待完成的子任务的列表
         self.curr_subtask: Subtask | None = None
         self.manager = Router.Router()
 
     async def task_decomposition(self, request):
         """当且仅当子任务队列为空且self.flag为True时调用此方法,分解复杂任务,将子任务加入子任务队列."""
         print("Run task decomposition")
-        rsp_list = await self.manager.run(
-            Message(
-                role="Jarvis",
-                content=request,
-                send_to=["Manager"],
-                sent_from="User",
-                cause_by="UserInput",
-            )
-        )  # 返回分解任务后的子任务list
+        rsp_list = await self.manager.run(request)  # 返回分解任务后的子任务list
         for task in rsp_list:
             if "id" not in task:
                 continue
@@ -55,6 +48,7 @@ class Jarvis(metaclass=Singleton):
                 dependency=task["dependency"],
             )
             self.task_que.put(newSubtask)
+            self.subtask_todo.append(newSubtask)
 
     async def process(self, request: str):
         if self.task_que.empty() and self.flag:
@@ -66,8 +60,29 @@ class Jarvis(metaclass=Singleton):
             self.curr_subtask = subtask
             print(f"Execute new subtask: {subtask.content}")
 
+            dep: list[int] = subtask.dependency
+            if len(dep) > 0:
+                dep_info: str = ""
+                for index in dep:
+                    content = self.subtask_done[index - 1].content
+                    finish_time = self.subtask_done[index - 1].finsih_time
+                    finish_info = self.subtask_done[index - 1].finish_msg
+                    dep_info += f"Subtask {index}: {content}, finish time: {finish_time}, finish info: {finish_info}\n"
+                dep_info_message = Message(
+                    role="Jarvis",
+                    content=dep_info,
+                    cause_by="Dependency_information",
+                    sent_from="User",
+                    send_to=[],
+                )
+                print("dependency_information: ", dep_info_message.to_Str())
+            else:
+                dep_info_message = None
+
             subtask_type = subtask.type
             if subtask_type == "TAP generation":
+                if dep_info_message is not None:
+                    dep_info_message.send_to.append("TAPGenerator")
                 await self.environment.publish_message(
                     Message(
                         role="Manager",
@@ -75,9 +90,12 @@ class Jarvis(metaclass=Singleton):
                         send_to=["TAPGenerator"],
                         sent_from="User",
                         cause_by="UserInput",
+                        attachment=dep_info_message,
                     )
                 )
             elif subtask_type == "Device Control":
+                if dep_info_message is not None:
+                    dep_info_message.send_to.append("DeviceControler")
                 await self.environment.publish_message(
                     Message(
                         role="Manager",
@@ -85,9 +103,12 @@ class Jarvis(metaclass=Singleton):
                         send_to=["DeviceControler"],
                         sent_from="User",
                         cause_by="UserInput",
+                        attachment=dep_info_message,
                     )
                 )
             elif subtask_type == "General Q&A":
+                if dep_info_message is not None:
+                    dep_info_message.send_to.append("Chatbot")
                 await self.environment.publish_message(
                     Message(
                         role="Manager",
@@ -95,6 +116,7 @@ class Jarvis(metaclass=Singleton):
                         send_to=["Chatbot"],
                         sent_from="User",
                         cause_by="UserInput",
+                        attachment=dep_info_message,
                     )
                 )
             else:
@@ -126,18 +148,18 @@ class Jarvis(metaclass=Singleton):
             curr_subtask: Subtask = deepcopy(self.curr_subtask)
             curr_subtask.finsih_time = formatted_time
             curr_subtask.finish_msg = msg
-            self.subtaskls.append(curr_subtask)  # 该子任务已经完成，加入subtaskls
+            self.subtask_done.append(curr_subtask)  # 该子任务已经完成，加入subtask_done
 
             print(f"{self.curr_subtask.content} done.")
-            print("self.subtaskls(jarvis.py, line 119):")
-            for st in self.subtaskls:
+            print("self.subtask_done(jarvis.py, line 119):")
+            for st in self.subtask_done:
                 print(st.toStr())
             if self.task_que.empty():  # 所有子任务都已经处理完毕
                 print("All subtasks done.")
                 rsp = deepcopy(self.rspls)
                 # TODO 所有任务信息由LLM进行汇总
                 self.rspls.clear()
-                self.subtaskls.clear()  # 清空rspls和subtaskls
+                self.subtask_done.clear()  # 清空rspls和subtask_done
                 return rsp
             return None
         # 如果环境运行得到的信息中的flag是False，说明resp_type是AskUser，本次任务还未完成，需要继续

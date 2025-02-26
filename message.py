@@ -24,4 +24,4 @@ class Message(BaseModel):
 
     def to_Str(self):
         attachment_str = f" -> {self.attachment.to_Str()}" if self.attachment else ""
-        return f"{self.role}: {self.content}{attachment_str}"  # 递归拼接
+        return f"{self.content}{attachment_str}"  # 递归拼接

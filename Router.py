@@ -157,8 +157,7 @@ class Router(Action):
         super().__init__(name, context)
         self.llm = LLM()
 
-    async def run(self, user_input: Message) -> list:
-        user_request = user_input.content
+    async def run(self, user_request: str) -> list:
         self.llm.add_system_msg(SYSTEM_MESSAGE_2)
         self.llm.add_user_msg(USER_MESSAGE.format(user_request=user_request))
         loop = asyncio.get_running_loop()

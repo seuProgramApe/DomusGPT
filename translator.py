@@ -166,6 +166,7 @@ class Translator(metaclass=Singleton):
         _logger.info("trigger_str: {}".format(trigger_str))
         _logger.info("action_str: {}".format(action_str))
 
+        # ---------------------------解析action_str----------------------------
         try:
             action_service_str = action_str.split("=")[0].strip()
             action_value_str = action_str.split("=")[1].strip()
@@ -225,12 +226,13 @@ class Translator(metaclass=Singleton):
             if op in trigger_str:
                 break
 
+        # ---------------------------解析trigger_str----------------------------
         trigger_service_str = trigger_str.split(op)[0].strip()  # trigger对应的服务
         trigger_value_str = trigger_str.split(op)[1].strip()  # trigger对应的值
 
-        # 处理以时间为trigger的自动化
+        # 检查自动化是否与时间相关
         time_triggers = ["Date", "Time", "Time & Date"]
-        time_related = False  # 自动化是否与时间有关
+        time_related = False
         if trigger_service_str in time_triggers:
             time_related = True
 
@@ -348,13 +350,13 @@ class Translator(metaclass=Singleton):
         field: {action_field_str}
         value: {action_value}"""
 
-        run_once = f"""
+        run_once_part = f"""
     - service: automation.turn_off
       target:
-        entity_id: automation.{timestamp}
-"""
+        entity_id: automation.{timestamp}"""
+
         if runOnce:
             # 如果该自动化只希望运行一次，添加run_once部分
-            new_automation += run_once
+            new_automation += run_once_part
         _logger.info("new automation yaml: {}".format(new_automation))
         await self.add_automation(new_automation)
