@@ -96,6 +96,7 @@ DeviceControler：
 7. 你必须仅输出一个JSON字符串，不包含其他任何内容。
 """
 
+# 英文prompt
 SYSTEM_MESSAGE = """
 You are DeviceControler, your role is to interpret user requests into device commands.
 

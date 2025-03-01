@@ -121,6 +121,7 @@ class Chat(Action):
     async def run(self, history_msg: list[Message], user_input: Message) -> Message:
         _logger.info(f"Chat run: {user_input}")
         user_request = user_input.content
+
         if not self.llm.sysmsg_added:
             self.llm.add_system_msg(SYSTEM_MESSAGE)
 
@@ -143,9 +144,7 @@ class Chat(Action):
         _logger.info(f"Chat response: {rsp}")
         print(rsp)
         rsp_json = self.parse_output(rsp)
-        self.llm.add_assistant_msg(
-            rsp
-        )  # 李安：这里理应加上将assistant的回复加入到llm的history中的代码，之前的开发者没有添加
+        self.llm.add_assistant_msg(rsp)
         if rsp_json["Action_type"] == "Finish":
             # 结束任务，执行命令，返回信息发给用户（发布到环境中）
             self.llm.reset()

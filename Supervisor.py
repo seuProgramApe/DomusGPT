@@ -49,7 +49,9 @@ class Supervisor(metaclass=Singleton):
                 type=task["type"],
                 dependency=task["dependency"],
             )
+            # 每次执行子任务时，从队列中取出一个子任务，执行完毕后再取下一个
             self.task_que.put(newSubtask)
+            # TODO subtask_todo是为了生成DAG图，执行任务过程中不需要更新
             self.subtask_todo.append(newSubtask)
 
     async def process(self, request: str):
@@ -137,6 +139,7 @@ class Supervisor(metaclass=Singleton):
             )
 
         msg, flag = await self.environment.run()
+
         if flag:  # 如果环境运行得到的信息中的flag是True，说明resp_type是Finish，本次任务已经完成，需要重置环境
             self.flag = True
             self.last_message_from = None
@@ -161,11 +164,20 @@ class Supervisor(metaclass=Singleton):
             if self.task_que.empty():  # 所有子任务都已经处理完毕
                 print("All subtasks done.")
                 rsp = deepcopy(self.rspls)
-                final_rsp = await self.synthesizer.run(rsp)
+
+                # 根据是否有多个子任务的返回信息，决定是否需要合成返回信息
+                if len(rsp) == 1:
+                    final_rsp = rsp[0].split(":", 1)[1]
+                else:
+                    final_rsp = await self.synthesizer.run(rsp)
+
                 self.rspls.clear()
-                self.subtask_done.clear()  # 清空rspls和subtask_done
+                self.subtask_done.clear()
+                self.subtask_todo.clear()
+
                 return final_rsp
-            return None
+            return None  # 如果返回None，说明还有子任务需要处理
+
         # 如果环境运行得到的信息中的flag是False，说明resp_type是AskUser，本次任务还未完成，需要继续
         self.flag = False
         self.last_message_from = (
@@ -174,16 +186,6 @@ class Supervisor(metaclass=Singleton):
         return msg.content
 
     async def run(self, request: str):
-        if request == "刷新":
-            get_all_context()
-            self.flag = True
-            self.last_message_from = None
-            self.task_que = Queue()
-            self.rspls = []
-            self.environment.reset()
-            self.curr_subtask: str = None
-            return "请问需要什么帮助？"
-
         rsp = await self.process(request)
         while rsp is None:
             rsp = await self.process(request)
