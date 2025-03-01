@@ -58,12 +58,14 @@ class LLM:
         self.model = CONFIG.configs_llm["provider"]
         self.temperature = CONFIG.configs_llm["temperature"]
         self.max_tokens = int(CONFIG.configs_llm["max_tokens"])
+        self.sysmsg_added: bool = False
         self._init_client()
         self.history = []
         _logger.debug(f"configs_llm: {CONFIG.configs_llm}")
 
     def add_system_msg(self, msg):
         self.history.append({"role": "system", "content": msg})
+        self.sysmsg_added = True
 
     def add_user_msg(self, msg):
         self.history.append({"role": "user", "content": msg})
@@ -144,6 +146,7 @@ class LLM:
         self.total_prompt_tokens = 0
         self.total_cost = 0.0
         self.model = CONFIG.configs_llm["provider"]
+        self.sysmsg_added = False
 
 
 if __name__ == "__main__":

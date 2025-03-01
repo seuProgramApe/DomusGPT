@@ -308,9 +308,9 @@ class GenericOpenAIAPIAgent(LocalLLMAgent):
         await self.hass.async_add_executor_job(get_all_context)
         await self.hass.async_add_executor_job(get_all_sensor_data)
 
-        from .jarvis import JARVIS
+        from .Supervisor import SUPERVISOR
 
-        self.jarvis = JARVIS
+        self.jarvis = SUPERVISOR
         from .translator import Translator
 
         self.translator = Translator(self.hass)

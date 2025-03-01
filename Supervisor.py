@@ -22,7 +22,7 @@ class Subtask:
         return f"Subtask:id={self.id}, content={self.content}, type={self.type}, dependency={self.dependency!s}, finish_time={self.finsih_time}"
 
 
-class Jarvis(metaclass=Singleton):
+class Supervisor(metaclass=Singleton):
     def __init__(self):
         self.environment = Environment()
         self.flag = True
@@ -191,4 +191,4 @@ class Jarvis(metaclass=Singleton):
         return "\n".join(f"Subtask {i} response: {msg}" for i, msg in enumerate(ls))
 
 
-JARVIS = Jarvis()
+SUPERVISOR = Supervisor()
