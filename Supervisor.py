@@ -7,6 +7,7 @@ from .context_assistant import get_all_context
 from .environment import Environment
 from .message import Message
 from .utils.singleton import Singleton
+from .Synthesizer import Synthesizer
 
 
 class Subtask:
@@ -32,12 +33,13 @@ class Supervisor(metaclass=Singleton):
         self.subtask_done: list[Subtask] = []  # 用于存储所有已经完成的子任务的列表
         self.subtask_todo: list[Subtask] = []  # 用于存储所有等待完成的子任务的列表
         self.curr_subtask: Subtask | None = None
-        self.manager = Router.Router()
+        self.router = Router.Router()
+        self.synthesizer = Synthesizer()
 
     async def task_decomposition(self, request):
         """当且仅当子任务队列为空且self.flag为True时调用此方法,分解复杂任务,将子任务加入子任务队列."""
         print("Run task decomposition")
-        rsp_list = await self.manager.run(request)  # 返回分解任务后的子任务list
+        rsp_list = await self.router.run(request)  # 返回分解任务后的子任务list
         for task in rsp_list:
             if "id" not in task:
                 continue
@@ -140,7 +142,9 @@ class Supervisor(metaclass=Singleton):
             self.last_message_from = None
             self.environment.reset()
 
-            self.rspls.append(msg.content)  # 将本次任务的返回信息加入rspls
+            self.rspls.append(
+                f"subtask {self.curr_subtask.id}:{msg.content}"
+            )  # 将本次任务的返回信息加入rspls
 
             now = datetime.now() + timedelta(hours=8)  # 正式发布时可能需要修改时区
             formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")  # 该任务完成的格式化时间
@@ -157,10 +161,10 @@ class Supervisor(metaclass=Singleton):
             if self.task_que.empty():  # 所有子任务都已经处理完毕
                 print("All subtasks done.")
                 rsp = deepcopy(self.rspls)
-                # TODO 所有任务信息由LLM进行汇总
+                final_rsp = await self.synthesizer.run(rsp)
                 self.rspls.clear()
                 self.subtask_done.clear()  # 清空rspls和subtask_done
-                return rsp
+                return final_rsp
             return None
         # 如果环境运行得到的信息中的flag是False，说明resp_type是AskUser，本次任务还未完成，需要继续
         self.flag = False
@@ -185,7 +189,9 @@ class Supervisor(metaclass=Singleton):
             rsp = await self.process(request)
         if isinstance(rsp, list):
             return self.printList(rsp)
-        return rsp
+        if isinstance(rsp, str):
+            return rsp
+        return "Error: illegal response type."
 
     def printList(self, ls: list) -> str:
         return "\n".join(f"Subtask {i} response: {msg}" for i, msg in enumerate(ls))

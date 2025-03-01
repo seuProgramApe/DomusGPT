@@ -83,6 +83,10 @@ Device list: {device_list}
 Data from sensors: {sensor_data}
 """
 
+TOOL_MESSAGE = """
+Tool return information: {tool_return}
+"""
+
 
 class Chat(Action):
     def __init__(self, name="Chatbot", context=None):
@@ -117,15 +121,21 @@ class Chat(Action):
     async def run(self, history_msg: list[Message], user_input: Message) -> Message:
         _logger.info(f"Chat run: {user_input}")
         user_request = user_input.content
-        self.llm.add_system_msg(SYSTEM_MESSAGE)
-        self.llm.add_user_msg(
-            USER_MESSAGE.format(
-                user_request=user_request,
-                device_list=CONFIG.hass_data["all_context"],
-                sensor_data=CONFIG.hass_data["all_sensor_data"],
-                tool_list=self.tool_list,
+        if not self.llm.sysmsg_added:
+            self.llm.add_system_msg(SYSTEM_MESSAGE)
+
+        if user_input.role == "Tool":
+            self.llm.add_user_msg(TOOL_MESSAGE.format(tool_return=user_request))
+        else:
+            self.llm.add_user_msg(
+                USER_MESSAGE.format(
+                    user_request=user_request,
+                    device_list=CONFIG.hass_data["all_context"],
+                    sensor_data=CONFIG.hass_data["all_sensor_data"],
+                    tool_list=self.tool_list,
+                )
             )
-        )
+
         loop = asyncio.get_running_loop()
         rsp = await loop.run_in_executor(
             None, self.llm.chat_completion_text_v1, self.llm.history

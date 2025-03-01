@@ -147,7 +147,9 @@ class GenerateTAP(Action):
         if self.user_request is None:
             self.user_request = user_input.content
         user_request = user_input.content
-        self.llm.add_system_msg(SYSTEM_MESSAGE_2)
+
+        if not self.llm.sysmsg_added:
+            self.llm.add_system_msg(SYSTEM_MESSAGE_2)
         all_context = CONFIG.hass_data["all_context"]
 
         curr_time = await self.time.run(None)
@@ -155,7 +157,7 @@ class GenerateTAP(Action):
         if user_input.attachment is not None:
             dep = f"current time:{curr_time}\n{user_input.attachment.content}"
         else:
-            dep = ""
+            dep = f"current time:{curr_time}\n"
 
         self.llm.add_user_msg(
             USER_MESSAGE.format(

@@ -12,7 +12,7 @@ from ..utils.logs import _logger
 
 SYSTEM_MESSAGE_2 = """
 # Role
-You are DeviceControler, your role is to interpret user requests into device commands.
+你是DeviceControler，你的任务是将用户请求解析为设备指令。
 
 # Command Format
 命令必须遵循以下格式：
@@ -92,7 +92,8 @@ DeviceControler：
 3. 仔细分析用户请求的每个前提，确保所有前提都得到充分支持后再发布指令。不得假设任何信息。
 4. 如果需要检查当前时间，必须调用 Time 工具。
 5. 传感器数据仅反映室内环境数据，不能代表天气状况。
-6. 你的回复**必须仅返回 JSON 字符串**，格式与上述示例一致。
+6. 请注意，如果你想修改空调的目标温度，你应生成如下格式的指令：id.air_conditioner.target_temperature = <value>
+7. 你必须仅输出一个JSON字符串，不包含其他任何内容。
 """
 
 SYSTEM_MESSAGE = """
@@ -164,13 +165,18 @@ Sensor data: {sensor_data}
 Dependency task information: {dependency_task_info}
 """
 
+TOOL_MESSAGE = """
+Tool return information: {tool_return}
+"""
+
 
 class ControlDevice(Action):
     def __init__(self, name="DeviceControler", context=None):
         super().__init__(name, context)
         self.llm = LLM()
         # TODO Agent不能准确识别需要调用时间工具的情况，考虑将时间直接输入
-        self.tool_agent = [weather_tool_agent(), time_tool_agent(), map_tool_agent()]
+        self.tool_agent = [weather_tool_agent(), map_tool_agent()]
+        self.time = time_tool_agent()
         self.tool_list = self.tool_agent_to_tool_list()
         self.tool_dict = self.tool_agent_to_tool_dict()
 
@@ -190,20 +196,25 @@ class ControlDevice(Action):
         all_context = CONFIG.hass_data["all_context"]
         sensor_data = CONFIG.hass_data["all_sensor_data"]
 
+        curr_time = await self.time.run(None)
         if user_input.attachment is not None:
-            dep = user_input.attachment.content
+            dep = f"current time:{curr_time}\n{user_input.attachment.content}"
         else:
-            dep = ""
+            dep = f"current time:{curr_time}\n"
 
-        self.llm.add_user_msg(
-            USER_MESSAGE.format(
-                user_request=user_request,
-                device_list=all_context,
-                tool_list=self.tool_list,
-                sensor_data=sensor_data,
-                dependency_task_info=dep,
+        if user_input.role == "Tool":
+            self.llm.add_user_msg(TOOL_MESSAGE.format(tool_return=user_request))
+        else:
+            self.llm.add_user_msg(
+                USER_MESSAGE.format(
+                    user_request=user_request,
+                    device_list=all_context,
+                    tool_list=self.tool_list,
+                    sensor_data=sensor_data,
+                    dependency_task_info=dep,
+                )
             )
-        )
+
         loop = asyncio.get_running_loop()
         rsp = await loop.run_in_executor(
             None, self.llm.chat_completion_text_v1, self.llm.history

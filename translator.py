@@ -122,8 +122,9 @@ class Translator(metaclass=Singleton):
         # if there is only "[]" in automations.yaml, remove it first
         with open(automation_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
-        if len(lines) == 1 and lines[0] == "[]\n":
+        if len(lines) == 1 and lines[0].strip() == "[]":
             with open(automation_file, "w", encoding="utf-8") as f:
+                print("add_automation():已经删除[]")
                 f.write("")
 
         # copy the automations.yaml for bak
