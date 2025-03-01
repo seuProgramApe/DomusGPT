@@ -1,6 +1,6 @@
-"""Constants for the SmartHomeAgent Conversation integration."""
+"""Constants for the DomusGPT Conversation integration."""
 
-DOMAIN = "SmartHomeAgent"
+DOMAIN = "DomusGPT"
 INTEGRATION_VERSION = "2025.2.12"
 
 CONF_PROVIDER = "provider"
@@ -24,6 +24,6 @@ DEFAULT_BASE_URL = "https://api.openai-proxy.org/v1"
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_MAX_TOKENS = 1024
 DEFAULT_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM2E1MzkxZDBiZjc0NWE5ODkwOTIxYmZhNTAzYjk0OCIsImlhdCI6MTc0MDgwNjc3NCwiZXhwIjoyMDU2MTY2Nzc0fQ.8jWO-hVJLrBKy84d8gAvb7rWMh1uMMmUEWtn3IpB0bo"
-DATA_PATH = "SmartHomeAgent_data"  # 李安：这里做了修改
+DATA_PATH = "DomusGPT_data"  # 李安：这里做了修改
 # 李安：原先的内容是 DATA_PATH = "/config/.storage/chatiot_conversation"
-WORK_PATH = "/config/custom_components/SmartHomeAgent"
+WORK_PATH = "/config/custom_components/DomusGPT"

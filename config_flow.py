@@ -1,4 +1,4 @@
-"""Config flow for SmartHomeAgent Conversation integration."""
+"""Config flow for DomusGPT Conversation integration."""
 
 from __future__ import annotations
 
@@ -115,8 +115,6 @@ class BaseChatiotConversationConfigFlow(FlowHandler, ABC):
 class ConfigFlow(
     BaseChatiotConversationConfigFlow, config_entries.ConfigFlow, domain=DOMAIN
 ):
-    """Handle a config flow for ChatIoT Conversation."""
-
     VERSION = 1
     provider_config: dict[str, Any]
 
@@ -272,7 +270,7 @@ class ConfigFlow(
         _logger.debug("Starting finish step")
         """Finish configuration."""
         return self.async_create_entry(
-            title="ChatIoT",
+            title="DomusGPT",
             description="A LLM-based Multi-Agent Chatbot for Home Assistant",
             data=self.provider_config,
         )

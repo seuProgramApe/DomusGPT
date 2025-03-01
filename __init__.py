@@ -1,4 +1,4 @@
-"""The SmartHomeAgent Conversation integration."""
+"""The DomusGPT Conversation integration."""
 
 from __future__ import annotations
 

@@ -1,6 +1,6 @@
 {
-  "domain": "SmartHomeAgent",
-  "name": "SmartHomeAgent",
+  "domain": "DomusGPT",
+  "name": "DomusGPT",
   "version": "2025.2.12",
   "codeowners": [""],
   "documentation": "",
