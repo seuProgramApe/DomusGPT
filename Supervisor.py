@@ -49,10 +49,11 @@ class Supervisor(metaclass=Singleton):
                 type=task["type"],
                 dependency=task["dependency"],
             )
-            # 每次执行子任务时，从队列中取出一个子任务，执行完毕后再取下一个
+            # 目前采用队列的FIFO方式决定任务执行顺序，每次执行子任务时，从队列中取出一个子任务，执行完毕后再取下一个
             self.task_que.put(newSubtask)
-            # TODO subtask_todo是为了生成DAG图，执行任务过程中不需要更新
+            # subtask_todo是为了生成DAG图，执行任务过程中不需要更新
             self.subtask_todo.append(newSubtask)
+            # TODO 拓扑排序
 
     async def process(self, request: str):
         if self.task_que.empty() and self.flag:

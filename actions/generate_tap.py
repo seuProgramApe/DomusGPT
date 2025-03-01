@@ -58,6 +58,7 @@ Assistant:
 }
 """
 
+# SYSTEM_MESSAGE_2要求多个动作分别生成TAP
 SYSTEM_MESSAGE_2 = """
 # 角色
 您是智能家居领域中的有用助手，名为TAPGenerator。您的任务是将用户输入解析为触发-动作程序（trigger-action program）。
