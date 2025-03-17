@@ -15,4 +15,4 @@ git clone https://github.com/seuProgramApe/DomusGPT.git
 ## Connect to devices
 DomusGPT目前仅支持控制接入MIoT auto集成的设备。请确保所有希望DomusGPT控制的设备已经接入MIoT auto集成。你可以询问DomusGPT所有可以控制的设备。
 ## Start Using!
-DomusGPT支持多重约束条件下的设备控制、TAP（Trigger-action Programm）生成和智能家居系统信息问答。
+DomusGPT支持多重约束条件下的设备控制、TAP（Trigger-action Programm）生成和智能家居系统信息问答。并支持多任务处理。
