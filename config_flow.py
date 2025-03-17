@@ -36,6 +36,8 @@ from .const import (
     CONF_TEMPERATURE,
     CONF_MAX_TOKENS,
     CONF_ACCESS_TOKEN,
+    CONF_WEATHER_API_KEY,
+    CONF_TRAFFIC_API_KEY,
     PROVIDERS,
     DEFAULT_PROVIDER,
     DEFAULT_API_KEY,
@@ -59,6 +61,8 @@ def STEP_CONFIG_PROVIDER_SCHEMA(
     temperature=None,
     max_tokens=None,
     access_token=None,
+    weather_api_key=None,
+    traffic_api_key=None,
 ):
     return vol.Schema(
         {
@@ -87,6 +91,8 @@ def STEP_CONFIG_PROVIDER_SCHEMA(
                 CONF_ACCESS_TOKEN,
                 default=access_token if access_token else DEFAULT_ACCESS_TOKEN,
             ): str,
+            vol.Required(CONF_WEATHER_API_KEY, default=None): str,
+            vol.Required(CONF_TRAFFIC_API_KEY, default=None): str,
         }
     )
 
@@ -249,6 +255,8 @@ class ConfigFlow(
                         temperature=user_input.get(CONF_TEMPERATURE),
                         max_tokens=user_input.get(CONF_MAX_TOKENS),
                         access_token=user_input.get(CONF_ACCESS_TOKEN),
+                        weather_api_key=user_input.get(CONF_WEATHER_API_KEY),
+                        traffic_api_key=user_input.get(CONF_TRAFFIC_API_KEY),
                     )
                 else:
                     return await self.async_step_finish()
