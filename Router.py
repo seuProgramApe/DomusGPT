@@ -79,6 +79,7 @@ User Input: 告诉我现在的天气？还有家中有哪些可用的设备？
 # Important Notes
 1. 你不能删去用户请求中的任何信息，即使你认为这些信息不重要。
 2. 对于**限制**不相同的多个子任务，即使动作都属于Device Control或General Q&A，也不能被压缩为一个子任务。
+3. 除非用户在该子任务的内容中提出明确要求（例如，设置一个自动化脚本等），否则该子任务的类型不应该是TAP generation。
 """
 
 USER_MESSAGE = """user_request: {user_request}"""

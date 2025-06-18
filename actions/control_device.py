@@ -176,7 +176,7 @@ class ControlDevice(Action):
         super().__init__(name, context)
         self.llm = LLM()
         # TODO Agent不能准确识别需要调用时间工具的情况，考虑将时间直接输入
-        self.tool_agent = [weather_tool_agent(), map_tool_agent()]
+        self.tool_agent = [weather_tool_agent(), map_tool_agent(), time_tool_agent()]
         self.time = time_tool_agent()
         self.tool_list = self.tool_agent_to_tool_list()
         self.tool_dict = self.tool_agent_to_tool_dict()
