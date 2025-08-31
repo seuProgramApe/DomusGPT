@@ -41,12 +41,14 @@ from .const import (
     PROVIDERS,
     DEFAULT_PROVIDER,
     DEFAULT_API_KEY,
+    DEFAULT_WEATHER_API_KEY,
+    DEFAULT_TRAFFIC_API_KEY,
     DEFAULT_BASE_URL,
     DEFAULT_TEMPERATURE,
     DEFAULT_MAX_TOKENS,
     DEFAULT_ACCESS_TOKEN,
 )
-
+from .configs import CONFIG
 from openai import OpenAI
 import httpx
 import requests
@@ -91,8 +93,14 @@ def STEP_CONFIG_PROVIDER_SCHEMA(
                 CONF_ACCESS_TOKEN,
                 default=access_token if access_token else DEFAULT_ACCESS_TOKEN,
             ): str,
-            vol.Required(CONF_WEATHER_API_KEY, default=None): str,
-            vol.Required(CONF_TRAFFIC_API_KEY, default=None): str,
+            vol.Required(
+                CONF_WEATHER_API_KEY,
+                default=weather_api_key if weather_api_key else DEFAULT_WEATHER_API_KEY,
+            ): str,
+            vol.Required(
+                CONF_TRAFFIC_API_KEY,
+                default=traffic_api_key if traffic_api_key else DEFAULT_TRAFFIC_API_KEY,
+            ): str,
         }
     )
 

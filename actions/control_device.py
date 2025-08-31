@@ -1,16 +1,20 @@
-import asyncio
+import asyncio  # noqa: D100, INP001
 import json
 import re
 
-from ..actions.action import Action
-from ..configs import CONFIG
-from ..llm import LLM
-from ..message import Message
-from ..tool_agent import time_tool_agent, weather_tool_agent, map_tool_agent
-from ..translator import Translator
-from ..utils.logs import _logger
+from ..actions.action import Action  # noqa: TID252
+from ..configs import CONFIG  # noqa: TID252
+from ..llm import LLM  # noqa: TID252
+from ..message import Message  # noqa: TID252
+from ..tool_agent import (  # noqa: TID252
+    map_tool_agent,
+    time_tool_agent,
+    weather_tool_agent,
+)
+from ..translator import Translator  # noqa: TID252
+from ..utils.logs import _logger  # noqa: TID252
 
-SYSTEM_MESSAGE_2 = """
+SYSTEM_MESSAGE = """
 # Role
 你是DeviceControler，你的任务是将用户请求解析为设备指令。
 
@@ -96,68 +100,6 @@ DeviceControler：
 7. 你必须仅输出一个JSON字符串，不包含其他任何内容。
 """
 
-# 英文prompt
-SYSTEM_MESSAGE = """
-You are DeviceControler, your role is to interpret user requests into device commands.
-
-# Command Format
-Commands must follow this format:
-id.service.property = <value>
-Device hierarchy must be respected (e.g., speaker is a sub-service of television, so volume must be under 3.television.speaker, not 3.television).
-Specially, if you want to modify the airconditioner target temperature, you should generate command with content: id.air_conditioner.target_temperature = <value>
-
-# Input
-1. User Request: The user's command or query.
-2. Device List: Information on devices, including ID, type, area, and available services. Each service has specific properties.
-3. Tool List: Available tools with their functions and required arguments.
-4. Sensor Data: The current data from all sensors attached to indoor devices. Each set of sensor information has an ID that matches the device ID to which the sensors belong.
-5. Dependecny task information: The information of the task that the current task depends on.
-
-# Solution
-1. Generate commands based on the user's request only when you have sufficient information to judge all the premises.
-2. If insufficient information available, take one of the following actions:
-    1.Ask the user for clarification.
-    2.Call a tool for assistance.
-3. You can only generate commands for user requests that need to be executed immediately. If you find that device control is not to be executed immediately (e.g., the user's request involves waiting for a device's status to change before controlling another device or waiting for a period of time before controlling a device), you need to seek help from other agents. In this case, you should choose the SeekHelp Action type.
-   However, if you can accurately determine the specific prerequisite information on which the current task depends (for example, whether to execute a command immediately depends on the operating status of another device, and this status has already been provided in the dependency task information), you should still generate the command instead of seeking assistance from another agent.
-   You must remember that even if you need to seek help from other agents, you still need to evaluate all the premises of the current task. The tasks you forward to other agents should only involve controlling devices, and should not contain other premises, as these premises need to be evaluated by you.
-
-# Action Types
-Finish: Execute the command and confirm with the user.
-AskUser: Request more information.
-CallTools: Use an external tool for assistance.
-SeekHelp: Request help from other agents only when the user's request cannot be executed immediately.
-
-# Output Format(In JSON type)
-AskUser :
-{"Action_type": "AskUser", "Thought": "Reason for requesting input", "Say_to_user": "Message in user's language"}
-CallTools:
-{"Action_type": "CallTools", "Thought": "Reason for calling the tool", "Arguments": "Arguments required", "Target_tool": "Exact tool name"}
-Finish:
-{"Action_type": "Finish", "Thought": "Reason for action", "Commands": ["Generated commands"], "Say_to_user": "Response in user's language"}
-SeekHelp:
-{"Action_type": "SeekHelp", "Thought": "Reason for seeking help", "Say_to_agent": "The task that needs to be done, this part must be in Chinese"}
-
-# Example
-Example 1:
-User: 我现在开车从学校出发，如果晚上九点五十到不了家而且今天气温比较低的话，半小时后帮我打开卧室的空调。
-DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "The user requested the air conditioner to be turned on at 9:50 PM if they are not home and it\'s cold outside. First, I need to determine if the user will be late arriving home at that time.",\n    "Arguments": "["school", "home", "driving"]",\n    "Target_tool": "PathPlanning"\n}
-Observation: 从用户的家到目的地驾车所需时间为：26.35分钟
-DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "The user has previously requested that if they are not home by 9:50 PM and it is cold outside, the bedroom air conditioner should be turned on. Since the user\'s travel time from school to home is about 26.35 minutes, I need to calculate the actual time of arrival based on their departure time and compare it with 9:50 PM. I also need to check the weather conditions at the user\'s home to determine if it is indeed cold.",\n    "Arguments": "",\n    "Target_tool": "Time"\n}
-Observation: 当前时间是：2025-01-31 21:47:41
-DeviceControler: {\n    "Action_type": "CallTools",\n    "Thought": "To determine if it is cold outside, I need to call the WeatherInformation tool to get the current temperature at the user\'s home location.",\n    "Arguments": "",\n    "Target_tool": "WeatherInformation"\n}
-Observation: 用户家所在区域的气象信息是<省略的具体气象信息>
-DeviceControler: {\n    "Action_type": "SeekHelp",\n    "Thought": "Based on the time, traffic, and temperature information I have gathered, I can determine that, according to the user's request, the air conditioner needs to be turned on in half an hour. Since the command is not to be executed immediately, I need to seek help from other agents.",\n    "Say_to_agent": "半小时后打开卧室的空调。"\n}
-
-# Important Notes
-1. Only one action per response. If multiple inputs are needed, request them incrementally.
-2. Only modify properties with 'write' access. Inform the user if a property is read-only.
-3. Carefully analyze every premise in the user's request and ensure that all premises are sufficiently supported by evidence before issuing a command. Never assume any information.
-4. Always call the tool Time if you want to check the current time.
-5. Sensor data intelligently reflects indoor environmental data but cannot represent weather conditions.
-6. You must **only returns a json string** in the format of the examples above.
-"""
-
 USER_MESSAGE = """
 User request: {user_request}
 Device list: {device_list}
@@ -188,31 +130,34 @@ class ControlDevice(Action):
             return json.loads(match.group(1).strip())
         return json.loads(output.strip())
 
-    async def run(self, history_msg: list[Message], user_input: Message) -> Message:
-        _logger.info(f"DeviceControler run: {user_input}")
-        user_request = user_input.content
+    async def run(self, history_msg: list[Message], input: Message) -> Message:
+        _logger.info(f"DeviceControler run: {input}")
+
         if not self.llm.sysmsg_added:
-            self.llm.add_system_msg(SYSTEM_MESSAGE_2)
+            self.llm.add_system_msg(SYSTEM_MESSAGE)
 
         all_context = CONFIG.hass_data["all_context"]
         sensor_data = CONFIG.hass_data["all_sensor_data"]
-
         curr_time = await self.time.run(None)
-        if user_input.attachment is not None:
-            dep = f"current time:{curr_time}\n{user_input.attachment.content}"
-        else:
-            dep = f"current time:{curr_time}\n"
 
-        if user_input.role == "Tool":
-            self.llm.add_user_msg(TOOL_MESSAGE.format(tool_return=user_request))
+        if input.attachment is not None:
+            # 依赖信息附加在input的attachment中
+            dependency = f"current time:{curr_time}\n{input.attachment.content}"
+        else:
+            dependency = f"current time:{curr_time}\n"
+
+        if input.role == "Tool":
+            self.llm.add_user_msg(
+                TOOL_MESSAGE.format(tool_return=input.content)
+            )  # 如果是工具的返回，会忽略input.attachment
         else:
             self.llm.add_user_msg(
                 USER_MESSAGE.format(
-                    user_request=user_request,
+                    user_request=input.content,
                     device_list=all_context,
                     tool_list=self.tool_list,
                     sensor_data=sensor_data,
-                    dependency_task_info=dep,
+                    dependency_task_info=dependency,
                 )
             )
 
@@ -260,7 +205,6 @@ class ControlDevice(Action):
             arguments = rsp_json["Arguments"]
             for tool in self.tool_list:
                 if tool["name"] == target_tool:
-                    # 调用tool
                     tool_rsp = await self.tool_dict[target_tool].run(arguments)
                     return Message(
                         role="Tool",
@@ -297,7 +241,7 @@ class ControlDevice(Action):
                 cause_by="UserInput",
                 attachment=Message(
                     role=self.name,
-                    content=dep,
+                    content=dependency,  # 请求TAPGenerator时附带依赖信息
                     sent_from="DeviceControler",
                     send_to=["TAPGenerator"],
                     cause_by="SYSTEM",

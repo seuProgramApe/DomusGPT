@@ -1,15 +1,17 @@
 # get devices and entities
 # compress the data
-import os
-import requests
-from .const import DATA_PATH
-from .configs import CONFIG
-from .utils.utils import get_json, write_json
-from .utils.logs import _logger
 import asyncio
+import os
+
+import requests
+
+from .configs import CONFIG
+from .const import DATA_PATH
+from .utils.logs import _logger
+from .utils.utils import get_json, write_json
 
 
-def download_instance():
+def download_instance():  # noqa: D103
     if not os.path.exists(f"{DATA_PATH}/temp/miot"):
         os.makedirs(f"{DATA_PATH}/temp/miot")
     if os.path.exists(f"{DATA_PATH}/temp/miot/model_type.json"):
@@ -92,7 +94,7 @@ def get_miot_info():
 
 def get_miot_devices():
     # 正式部署版本的device_file路径为"/config/.storage/core.device_registry"
-    device_file = "/workspaces/hahaha/config/.storage/core.device_registry"
+    device_file = "config/.storage/core.device_registry"
     miot_devices = []
     devices_json = get_json(device_file)
     device_id_counter = 1

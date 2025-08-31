@@ -6,6 +6,7 @@ from abc import ABC
 from .context_assistant import get_all_states, find_entity_by_entity_id
 from datetime import datetime, timedelta
 import json
+from .configs import CONFIG
 
 
 class tool_agent(ABC):
@@ -54,7 +55,7 @@ class weather_tool_agent(tool_agent):
 
     async def fetch_weather(self, latitude=31.2304, longitude=118.7966):
         """获取给定经纬度地区的天气信息，仅返回 result 部分，并将 key 翻译为中文."""
-        api_key = "pyO14zYLps7PLRpr"
+        api_key = CONFIG.hass_data["weather_api_key"]
         url = (
             f"https://api.caiyunapp.com/v2.6/{api_key}/{longitude},{latitude}/realtime"
         )
@@ -149,12 +150,12 @@ class map_tool_agent(tool_agent):
 
     async def fetch_traffic(self, start: str, dest: str, mode: str):
         """高德API获取路径规划(异步版本)."""
-        api_key = "ba232242633f94c98b5d197e325ca699"
-        origin_longitude = 118.927494
-        origin_latitude = 32.093479  # 尚东花园北门
-        dest_longitude = 118.756486
-        dest_latitude = 32.077751  # 南师附中正门
-        url = f"https://restapi.amap.com/v5/direction/driving?origin={origin_longitude},{origin_latitude}&destination={dest_longitude},{dest_latitude}&key={api_key}&show_fields=cost"
+        api_key = CONFIG.hass_data["traffic_api_key"]
+        example_home_longitude = 118.927494
+        example_home_latitude = 32.093479
+        example_dest_longitude = 118.756486
+        example_dest_latitude = 32.077751
+        url = f"https://restapi.amap.com/v5/direction/driving?origin={example_home_longitude},{example_home_latitude}&destination={example_dest_longitude},{example_dest_latitude}&key={api_key}&show_fields=cost"
 
         async with aiohttp.ClientSession() as session:  # noqa: SIM117
             async with session.get(url) as response:

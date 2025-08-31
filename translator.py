@@ -35,34 +35,33 @@ class Translator(metaclass=Singleton):
             )
             return
 
-        id = int(id_str)
-
+        # 找到id_str对应的设备的mac_address
+        id_num = int(id_str)
         miot_devices = CONFIG.hass_data["miot_devices"]
-
         mac_address = ""
         for device in miot_devices:
-            if device.get("id", -1) == id:
-                mac_address = device.get("mac_address", "")
+            if device.get("id", -1) == id_num:  # 若"id"字段不存在，则返回-1
+                mac_address = device.get(
+                    "mac_address", ""
+                )  # 若"mac_address"字段不存在，则返回空串
                 break
 
         parts = field_str.split(".")
-
-        state = find_entity_by_field_mac(field_str, mac_address)
-
-        if state is None and len(parts) == 3:
+        entity = find_entity_by_field_mac(field_str, mac_address)
+        if entity is None and len(parts) == 3:
             field_str = f"{parts[1]}.{parts[2]}"  # 更新field_str再次搜索
-            state = find_entity_by_field_mac(field_str, mac_address)
-            if state is not None:  # 搜索成功
+            entity = find_entity_by_field_mac(field_str, mac_address)
+            if entity is not None:  # 搜索成功
                 parts = field_str.split(".")
             else:
                 print(f"Can't find state with field_str {field_str}")
                 return
         service_name = parts[0]
         property_name = ".".join(parts[1:])
-        entity_id = state["entity_id"]
+        entity_id = entity["entity_id"]
 
         for device in CONFIG.hass_data["all_context"]:
-            if device.get("id", -1) == id:
+            if device.get("id", -1) == id_num:
                 services = device.get("services", {})
                 service = services[service_name]
                 property = service[property_name]
@@ -77,13 +76,7 @@ class Translator(metaclass=Singleton):
                 else:
                     value = value_str
                 break
-
-        _logger.debug("miot_set_property entity_id: {}".format(entity_id))
-        _logger.debug("miot_set_property field_str: {}".format(field_str))
-        _logger.debug("miot_set_property value: {}".format(value))
-
         service_data = {"entity_id": entity_id, "field": field_str, "value": value}
-
         await self.hass.services.async_call("xiaomi_miot", "set_property", service_data)
 
     async def _check_config(self):
@@ -112,36 +105,34 @@ class Translator(metaclass=Singleton):
             return "failed_to_connect"
 
     async def add_automation(self, new_automation: str):
+        """将新的自动化配置添加到automations.yaml文件中，并检查配置有效性."""
         _logger.debug("add_automation")
         # config_path = "/config"
-        # 李安：这里的config_path似乎有问题，我改为绝对路径，原先内容是上面这行
-        config_path = "/workspaces/hahaha/config"
-        # 以上是更改的地方-------------------------------------------------
+        # config_path改为绝对路径，原先内容是上面这行
+        config_path = "/workspaces/HomeAssistant/config"
 
-        automation_file = os.path.join(config_path, "automations.yaml")
+        automation_path = os.path.join(config_path, "automations.yaml")
+
         # if there is only "[]" in automations.yaml, remove it first
-        with open(automation_file, "r", encoding="utf-8") as f:
+        with open(automation_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
         if len(lines) == 1 and lines[0].strip() == "[]":
-            with open(automation_file, "w", encoding="utf-8") as f:
-                print("add_automation():已经删除[]")
+            with open(automation_path, "w", encoding="utf-8") as f:
                 f.write("")
 
         # copy the automations.yaml for bak
-        bak_file = os.path.join(config_path, "automations.yaml.bak")
-        # print("已经创建bak文件")
-        with open(automation_file, "r", encoding="utf-8") as f:
+        automation_bak_path = os.path.join(config_path, "automations.yaml.bak")
+        with open(automation_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
-        with open(bak_file, "w", encoding="utf-8") as f:
+        with open(automation_bak_path, "w", encoding="utf-8") as f:
             f.writelines(lines)
-            # print("已经写入bak文件")
 
         # Ensure the file starts with "---"
         if not lines:
-            with open(automation_file, "w", encoding="utf-8") as f:
+            with open(automation_path, "w", encoding="utf-8") as f:
                 f.write("---")
                 f.writelines(lines)
-        append_file(automation_file, new_automation)
+        append_file(automation_path, new_automation)
         res_check = await self._check_config()
         if res_check == "valid":
             # print("配置文件检查通过")
@@ -150,9 +141,9 @@ class Translator(metaclass=Singleton):
         else:
             # replace the automations.yaml with the bak file
             _logger.error("invalid configuration, restore automations.yaml")
-            with open(bak_file, "r", encoding="utf-8") as f:
+            with open(automation_bak_path, encoding="utf-8") as f:
                 lines = f.readlines()
-            with open(automation_file, "w", encoding="utf-8") as f:
+            with open(automation_path, "w", encoding="utf-8") as f:
                 f.writelines(lines)
                 # print("已经写入automations.yaml文件")
 
