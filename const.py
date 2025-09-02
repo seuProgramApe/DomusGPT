@@ -9,8 +9,8 @@ CONF_BASE_URL = "base_url"
 CONF_TEMPERATURE = "temperature"
 CONF_MAX_TOKENS = "max_tokens"
 CONF_ACCESS_TOKEN = "access_token"
-CONF_WEATHER_API_KEY = "weather_api_key"
-CONF_TRAFFIC_API_KEY = "traffic_api_key"
+CONF_WEATHER_API_KEY = "Weather Service API Key"
+CONF_TRAFFIC_API_KEY = "Traffic Service API Key"
 
 PROVIDERS = [
     "gpt-4-turbo",

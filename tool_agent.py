@@ -55,7 +55,7 @@ class weather_tool_agent(tool_agent):
 
     async def fetch_weather(self, latitude=31.2304, longitude=118.7966):
         """获取给定经纬度地区的天气信息，仅返回 result 部分，并将 key 翻译为中文."""
-        api_key = CONFIG.hass_data["weather_api_key"]
+        api_key = CONFIG.hass_data["Weather Service API Key"]
         url = (
             f"https://api.caiyunapp.com/v2.6/{api_key}/{longitude},{latitude}/realtime"
         )
@@ -150,7 +150,7 @@ class map_tool_agent(tool_agent):
 
     async def fetch_traffic(self, start: str, dest: str, mode: str):
         """高德API获取路径规划(异步版本)."""
-        api_key = CONFIG.hass_data["traffic_api_key"]
+        api_key = CONFIG.hass_data["Traffic Service API Key"]
         example_home_longitude = 118.927494
         example_home_latitude = 32.093479
         example_dest_longitude = 118.756486

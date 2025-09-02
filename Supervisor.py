@@ -2,8 +2,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from queue import Queue
 
-from . import Router
-from .context_assistant import get_all_context
+from .Router import Router
 from .environment import Environment
 from .message import Message
 from .utils.singleton import Singleton
@@ -33,7 +32,7 @@ class Supervisor(metaclass=Singleton):
         self.subtask_done: list[Subtask] = []  # 用于存储所有已经完成的子任务的列表
         self.subtask_todo: list[Subtask] = []  # 用于存储所有等待完成的子任务的列表
         self.curr_subtask: Subtask | None = None
-        self.router = Router.Router()
+        self.router = Router()
         self.synthesizer = Synthesizer()
 
     async def task_decomposition(self, request):
@@ -74,7 +73,7 @@ class Supervisor(metaclass=Singleton):
                     finish_info = self.subtask_done[index - 1].finish_msg
                     dep_info += f"Subtask {index}: {content}, finish time: {finish_time}, finish info: {finish_info}\n"
                 dep_info_message = Message(
-                    role="Jarvis",
+                    role="Supervisor",
                     content=dep_info,
                     cause_by="Dependency_information",
                     sent_from="User",
@@ -84,13 +83,12 @@ class Supervisor(metaclass=Singleton):
             else:
                 dep_info_message = None
 
-            subtask_type = subtask.type
-            if subtask_type == "TAP generation":
+            if subtask.type == "TAP generation":
                 if dep_info_message is not None:
                     dep_info_message.send_to.append("TAPGenerator")
                 await self.environment.publish_message(
                     Message(
-                        role="Manager",
+                        role="Supervisor",
                         content=subtask.content,
                         send_to=["TAPGenerator"],
                         sent_from="User",
@@ -98,12 +96,13 @@ class Supervisor(metaclass=Singleton):
                         attachment=dep_info_message,
                     )
                 )
-            elif subtask_type == "Device Control":
+
+            elif subtask.type == "Device Control":
                 if dep_info_message is not None:
                     dep_info_message.send_to.append("DeviceControler")
                 await self.environment.publish_message(
                     Message(
-                        role="Manager",
+                        role="Supervisor",
                         content=subtask.content,
                         send_to=["DeviceControler"],
                         sent_from="User",
@@ -111,12 +110,13 @@ class Supervisor(metaclass=Singleton):
                         attachment=dep_info_message,
                     )
                 )
-            elif subtask_type == "General Q&A":
+
+            elif subtask.type == "General Q&A":
                 if dep_info_message is not None:
                     dep_info_message.send_to.append("Chatbot")
                 await self.environment.publish_message(
                     Message(
-                        role="Manager",
+                        role="Supervisor",
                         content=subtask.content,
                         send_to=["Chatbot"],
                         sent_from="User",
@@ -126,12 +126,13 @@ class Supervisor(metaclass=Singleton):
                 )
             else:
                 raise Exception("Unknown subtask type")
-        elif self.last_message_from is None:
-            raise Exception("last_message_from is None")
+
         else:  # 如果flag为False，说明上一个子任务还未完成，正在等待用户回复，所以需要将用户回复发送给上一个子任务的角色
+            if self.last_message_from is None:
+                raise Exception("last_message_from is None")
             await self.environment.publish_message(
                 Message(
-                    role="Jarvis",
+                    role="Supervisor",
                     content=request,
                     send_to=[self.last_message_from],
                     sent_from="User",
@@ -159,7 +160,7 @@ class Supervisor(metaclass=Singleton):
             self.subtask_done.append(curr_subtask)  # 该子任务已经完成，加入subtask_done
 
             print(f"{self.curr_subtask.content} done.")
-            print("self.subtask_done(jarvis.py, line 119):")
+            print("self.subtask_done(Supervisor.py, line 119):")
             for st in self.subtask_done:
                 print(st.toStr())
             if self.task_que.empty():  # 所有子任务都已经处理完毕
@@ -186,18 +187,18 @@ class Supervisor(metaclass=Singleton):
         )  # msg.role记录了上一次信息是由哪个角色发出的，下一次信息要发给这个角色
         return msg.content
 
-    async def run(self, request: str):
+    async def run(self, request: str):  # noqa: D102
+        # request 即 conversation[-1]["message"], 用户输入
         rsp = await self.process(request)
         while rsp is None:
             rsp = await self.process(request)
         if isinstance(rsp, list):
-            return self.printList(rsp)
+            return "\n".join(
+                f"Subtask {i} response: {msg}" for i, msg in enumerate(rsp)
+            )
         if isinstance(rsp, str):
             return rsp
         return "Error: illegal response type."
-
-    def printList(self, ls: list) -> str:
-        return "\n".join(f"Subtask {i} response: {msg}" for i, msg in enumerate(ls))
 
 
 SUPERVISOR = Supervisor()

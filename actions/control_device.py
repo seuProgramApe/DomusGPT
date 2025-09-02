@@ -134,7 +134,7 @@ class ControlDevice(Action):
         _logger.info(f"DeviceControler run: {input}")
 
         if not self.llm.sysmsg_added:
-            self.llm.add_system_msg(SYSTEM_MESSAGE)
+            self.llm.add_system_msg(SYSTEM_MESSAGE)  # 将LLM的sysmsg_added设为True
 
         all_context = CONFIG.hass_data["all_context"]
         sensor_data = CONFIG.hass_data["all_sensor_data"]
@@ -168,7 +168,7 @@ class ControlDevice(Action):
         _logger.info(f"ControlDevice response: {rsp}")
         print(rsp)
         rsp_json = self.parse_output(rsp)
-        self.llm.add_assistant_msg(rsp)  # llm的回复加入记忆
+        self.llm.add_assistant_msg(rsp)
         _logger.info(f"DeviceControler rsp: {rsp}")
 
         if rsp_json["Action_type"] == "Finish":
@@ -212,14 +212,6 @@ class ControlDevice(Action):
                         sent_from=target_tool,
                         send_to=["DeviceControler"],
                         cause_by="UserResponse",
-                        attachment=Message(
-                            role="DeviceControler",
-                            content=rsp,
-                            sent_from="DeviceControler",
-                            send_to=["Tool"],
-                            cause_by="AskUser",
-                            attachment=None,
-                        ),
                     )
             # 若没有找到对应的工具：返回工具不可用的信息
             return Message(
@@ -258,5 +250,6 @@ class ControlDevice(Action):
         )
 
     def reset(self):
+        """清空LLM的history并将sysmsg_added设为False."""
         self.llm.reset()
         _logger.info(f"{self.name} reset.")

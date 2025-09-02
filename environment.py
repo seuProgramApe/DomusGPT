@@ -33,7 +33,7 @@ class Environment(BaseModel):
 
     def add_role(self, role: Role):
         """增加一个在当前环境的Role."""
-        role.set_env(self)  # 李安：将当前环境（Jarvis的环境）设置为role的环境
+        role.set_env(self)  # 将当前环境设置为role的环境
         self.roles[role.profile] = role
 
     def add_roles(self, roles: list[Role]):
@@ -48,7 +48,6 @@ class Environment(BaseModel):
         self.message_cnt += 1
 
     async def run(self, k=10) -> tuple[Message, bool]:
-        """Jarvis发布一次信息后，角色再环境中并发运行."""
         # 默认允许角色之间对话10轮
         _logger.info("-----------------run-----------------")
         current_message_cnt = self.message_cnt
@@ -57,21 +56,24 @@ class Environment(BaseModel):
             # 判断是否有新消息，如果没有则退出
             if i != 0 and self.message_cnt == current_message_cnt:
                 break  # 一轮中没有任何新消息产生
-            current_message_cnt = self.message_cnt
 
+            current_message_cnt = self.message_cnt
             futures = []
-            for key in self.roles:
-                role = self.roles[key]
-                future = role.run()  # future是一个协程
-                futures.append(future)  # 将协程添加到futures列表中
+            for role_name in self.roles:
+                role = self.roles[role_name]
+                future = role.run()
+                futures.append(future)
             await asyncio.gather(
                 *futures
             )  # role.run()方法中await self._publish_message(rsp_message)这一行已经将rsp_message发布到环境中了，所以这里无需关注返回值
-        latest_message = self.memory.get_latest_message()
 
+        latest_message = self.memory.get_latest_message()
         _logger.info(f"latest_message: {latest_message.to_dict()}")
         if latest_message.cause_by not in ["AskUser", "Finish"]:
-            return ("运行出错，请检查", True)
+            return (
+                'Error: latest_message.cause_by is not in ["AskUser", "Finish"], please try again.',
+                True,
+            )
         if latest_message.cause_by == "Finish":
             return (latest_message, True)
         if latest_message.cause_by == "AskUser":

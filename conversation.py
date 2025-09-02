@@ -57,7 +57,7 @@ async def async_setup_entry(
     provider = entry.data.get(CONF_PROVIDER, DEFAULT_PROVIDER)
     agent = await hass.async_add_executor_job(create_agent, provider)
 
-    await agent._async_load_model(entry)
+    await agent._async_load_configuration(entry)
 
     async_add_entities([agent])
 
@@ -162,16 +162,20 @@ class LocalLLMAgent(ConversationEntity, AbstractConversationAgent):
 class GenericOpenAIAPIAgent(LocalLLMAgent):
     """Generic OpenAI API conversation agent."""
 
-    async def _async_load_model(self, entry: ConfigEntry) -> None:
-        # 加载LLM API配置
+    async def _async_load_configuration(self, entry: ConfigEntry) -> None:
+        # 加载各项API配置
         CONFIG.configs_llm["provider"] = entry.data[CONF_PROVIDER]
         CONFIG.configs_llm["api_key"] = entry.data["api_key"]
         CONFIG.configs_llm["base_url"] = entry.data["base_url"]
         CONFIG.configs_llm["temperature"] = entry.data["temperature"]
         CONFIG.configs_llm["max_tokens"] = entry.data["max_tokens"]
         CONFIG.hass_data["access_token"] = entry.data["access_token"]
-        CONFIG.hass_data["weather_api_key"] = entry.data["weather_api_key"]
-        CONFIG.hass_data["traffic_api_key"] = entry.data["traffic_api_key"]
+        CONFIG.hass_data["Weather Service API Key"] = entry.data[
+            "Weather Service API Key"
+        ]
+        CONFIG.hass_data["Traffic Service API Key"] = entry.data[
+            "Traffic Service API Key"
+        ]
         _logger.debug(f"configs_llm: {CONFIG.configs_llm}")
         _logger.debug(f"hass_data: {CONFIG.hass_data}")
 
@@ -192,7 +196,7 @@ class GenericOpenAIAPIAgent(LocalLLMAgent):
 
         from .Supervisor import SUPERVISOR
 
-        self.jarvis = SUPERVISOR
+        self.supervisor = SUPERVISOR
 
         from .translator import Translator
 
@@ -200,7 +204,7 @@ class GenericOpenAIAPIAgent(LocalLLMAgent):
 
     async def _async_generate(self, conversation: list[dict]) -> str:
         try:
-            result = await self.jarvis.run(
+            result = await self.supervisor.run(
                 conversation[-1]["message"]
             )  # Agent处理对话的入口
             _logger.debug(f"result: {result}")
