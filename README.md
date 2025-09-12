@@ -10,7 +10,7 @@
 cd config/custom_components/
 git clone https://github.com/seuProgramApe/DomusGPT.git
 ```
-3. 重新启动Home Assistant。在Home Assistant中依次点击设置、设备与服务、添加集成。选择DomusGPT并配置集成。你需要1.LLM API Key 2.彩云天气 API Key 3.高德地图 API Key以获取DomusGPT支持的所有服务。
+3. 重新启动Home Assistant。在Home Assistant中依次点击设置、设备与服务、添加集成。选择DomusGPT并配置集成。你需要 1.LLM API Key 2.彩云天气API Key 3.高德地图API Key以获取DomusGPT支持的所有服务。
 4. 在Home Assistant中依次点击设置、语音助手、添加助手，选择DomusGPT作为对话代理。
 ## Connect to devices
 DomusGPT目前仅支持控制接入MIoT auto集成的设备。请确保所有希望DomusGPT控制的设备已经接入MIoT auto集成。你可以通过询问DomusGPT获知所有可以被控制的设备。
