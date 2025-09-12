@@ -148,6 +148,7 @@ class Translator(metaclass=Singleton):
                 # print("已经写入automations.yaml文件")
 
     async def deploy_tap(self, runOnce: bool, user_input, TAP_json):
+        # user_input仅用于生成自动化的alias
         _logger.debug("deploy_tap")
         miot_devices = CONFIG.hass_data["miot_devices"]
         triggers = TAP_json.get("trigger", "")
@@ -326,9 +327,7 @@ class Translator(metaclass=Singleton):
 
         timestamp = int(time.time() * 1000)
         # 只运行一次的自动化啊alias必须和id一致，便于后续关闭
-        alias = user_input
-        if runOnce:
-            alias = timestamp
+        alias = user_input if not runOnce else timestamp
 
         new_automation = f"""
 - id: '{timestamp}'

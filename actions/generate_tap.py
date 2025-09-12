@@ -96,14 +96,17 @@ class GenerateTAP(Action):
     async def run(self, history_msg: list[Message], user_input: Message) -> Message:
         _logger.info(f"TapGenerator run: {user_input}")
         if self.user_request is None:
-            self.user_request = user_input.content
+            self.user_request = (
+                user_input.content
+            )  # 将self.user_request设置为用户首次请求内容
         user_request = user_input.content
 
         if not self.llm.sysmsg_added:
             self.llm.add_system_msg(SYSTEM_MESSAGE)
-        all_context = CONFIG.hass_data["all_context"]
 
+        all_context = CONFIG.hass_data["all_context"]
         curr_time = await self.time.run(None)
+
         # 暂时只在DeviceControler转发的请求中才会有依赖信息
         if user_input.attachment is not None:
             dep = f"current time:{curr_time}\n{user_input.attachment.content}"

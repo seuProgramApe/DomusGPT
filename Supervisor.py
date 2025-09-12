@@ -66,6 +66,7 @@ class Supervisor(metaclass=Singleton):
 
             dep: list[int] = subtask.dependency
             if len(dep) > 0:
+                # 当subtask.dependecny非空时，说明该任务有依赖任务信息
                 dep_info: str = ""
                 for index in dep:
                     content = self.subtask_done[index - 1].content

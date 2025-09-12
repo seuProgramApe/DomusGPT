@@ -131,7 +131,7 @@ class ControlDevice(Action):
         return json.loads(output.strip())
 
     async def run(self, history_msg: list[Message], input: Message) -> Message:
-        _logger.info(f"DeviceControler run: {input}")
+        _logger.info(f"DeviceControler run: {input}")  # noqa: G004
 
         if not self.llm.sysmsg_added:
             self.llm.add_system_msg(SYSTEM_MESSAGE)  # 将LLM的sysmsg_added设为True
