@@ -3,7 +3,7 @@
 东南大学SRTP（Student Research Training Program）项目：面向智能家居的物联网智能体生成技术研究。本项目开发了DomusGPT，一个可用于Home Assistant平台的智能家居助手集成（Integration）。
 ## Installation
 ### Install Home Assistant
-DomusGPT是运行在Home Assistant中的集成（integration）。DomusGPT依托Home Assistant作为控制智能家居设备的平台。你需要首先安装Home Assistant以支持DomusGPT的运行。
+DomusGPT是运行在Home Assistant中的集成（integration），其依托Home Assistant平台控制智能家居设备。你需要首先安装Home Assistant方可使用DomusGPT。
 ### Install DomusGPT
 1. 确保Home Assistant中config/custom_components/目录存在。
 2. 在终端运行以下命令
