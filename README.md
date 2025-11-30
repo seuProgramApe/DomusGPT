@@ -1,6 +1,6 @@
 # DomusGPT
 ## Introduction
-东南大学SRTP项目（No.202509091）：面向智能家居的物联网智能体生成技术研究。本项目开发了DomusGPT，一款可用于Home Assistant平台的智能家居助手集成。
+东南大学SRTP项目（No. 202509091）：面向智能家居的物联网智能体生成技术研究。本项目开发了DomusGPT，一款可用于Home Assistant平台的智能家居助手集成。
 ## Installation
 ### Install Home Assistant
 DomusGPT是运行在Home Assistant平台上的集成，依赖Home Assistant平台控制智能家电。你需要首先安装Home Assistant方可使用DomusGPT。
