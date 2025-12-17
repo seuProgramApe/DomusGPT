@@ -1,22 +1,32 @@
 # DomusGPT
-## Introduction
+
+## 项目简介
 东南大学SRTP项目（No. 202509091）：面向智能家居的物联网智能体生成技术研究。本项目开发了DomusGPT，一款可用于Home Assistant平台的智能家居助手集成。
-## Installation
-### Install Home Assistant
-DomusGPT是运行在Home Assistant平台上的集成，依赖Home Assistant平台控制智能家电。你需要首先安装Home Assistant方可使用DomusGPT。
-### Install DomusGPT
-1. 确保Home Assistant中config/custom_components/目录存在。
-2. 在终端运行以下命令
-```bash
-cd config/custom_components/
-git clone https://github.com/seuProgramApe/DomusGPT.git
-```
-3. 重启Home Assistant。在Home Assistant中依次点击设置、设备与服务、添加集成。选择DomusGPT并配置该集成。你需要
-   1.DomusGPT支持的任一LLM的API Key
-   2.彩云天气API Key
-   3.高德地图API Key
-4. 在Home Assistant中依次点击设置、语音助手、添加助手，选择DomusGPT作为对话代理。
-## Connect to Devices
-DomusGPT目前仅支持控制接入MIoT auto集成的设备。请确保所有希望DomusGPT控制的设备已经接入MIoT auto集成。你可以通过询问DomusGPT获知所有可以被控制的设备。
-## Start Using!
-DomusGPT能够处理多重约束条件下的设备控制、TAP（Trigger-action Programm）脚本生成、综合信息问答等复杂任务。
+
+## 安装指南
+
+### 1. 安装Home Assistant
+DomusGPT运行在Home Assistant平台上，请首先安装Home Assistant。
+
+### 2. 安装DomusGPT
+1. 在Home Assistant的`config/`目录下创建目录`custom_components/`（若该目录存在可忽略）。
+2. 使用以下命令将DomusGPT克隆到该目录：
+    ```bash
+    cd config/custom_components/
+    git clone https://github.com/seuProgramApe/DomusGPT.git
+    ```
+3. 重启Home Assistant。
+4. 在Home Assistant中，依次点击 **设置 > 设备与服务 > 添加集成**，选择**DomusGPT**进行配置，配置时需要提供以下API Key：
+   - 任一支持的大语言模型的API Key（提供列表供选择）
+   - 彩云天气API Key
+   - 高德地图API Key
+
+### 3. 启用语音助手
+在Home Assistant中，依次点击**设置 > 语音助手 > 添加助手**，选择**DomusGPT**作为对话代理。
+
+## 设备连接
+DomusGPT当前仅支持控制接入**MIoT auto**集成的设备。请确保所有设备已经通过该集成接入Home Assistant。你可通过询问DomusGPT获知所有可控制的设备列表。
+
+## 开始使用
+DomusGPT支持多重约束条件下的设备控制、TAP脚本生成以及复杂的信息问答任务。
+
